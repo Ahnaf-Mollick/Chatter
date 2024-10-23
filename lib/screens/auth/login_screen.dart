@@ -89,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
               height: mq.height * .07,
               child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: Colors.amber,
                     elevation: 1,
                   ),
                   onPressed: () {
