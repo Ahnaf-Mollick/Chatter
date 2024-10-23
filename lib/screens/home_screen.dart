@@ -37,11 +37,22 @@ class _HomeScreenState extends State<HomeScreen> {
           child: const Icon(Icons.add_comment),
         ),
       ),
-      body: ListView.builder(
-        itemCount: 1,
-        physics: const BouncingScrollPhysics(),
-        itemBuilder: (context, index) {
-          return const ChatUserCard();
+      body: StreamBuilder(
+        stream: APIs.firestore.collection('user').snapshots(),
+        builder: (context, snapshot) {
+          final list = [];
+          if (snapshot.hasData) {
+            final data = snapshot.data?.docs;
+            for (var i in data!) {
+              list.add(i.data()['name']);
+            }
+          }
+          return ListView.builder(
+              itemCount: list.length,
+              physics: const BouncingScrollPhysics(),
+              itemBuilder: (context, index) {
+                return Text('Name:${list[index]}');
+              });
         },
       ),
     );
