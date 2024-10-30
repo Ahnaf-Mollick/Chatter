@@ -1,11 +1,9 @@
-import 'dart:convert';
-
 import 'package:chatter/models/chat_user.dart';
 import 'package:chatter/screens/auth/login_screen.dart';
+import 'package:chatter/screens/profile_screem.dart';
 import 'package:chatter/widgets/chat_user_card.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'dart:developer' as developer;
 import '../api/apis.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -26,18 +24,20 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Chatter'),
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
-          IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert)),
+          IconButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => ProfileScreen(user: list[0])));
+              },
+              icon: const Icon(Icons.more_vert)),
         ],
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 15),
         child: FloatingActionButton(
-          onPressed: () async {
-            await APIs.auth.signOut();
-            await GoogleSignIn().signOut();
-            Navigator.pushReplacement(context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()));
-          },
+          onPressed: () {},
           backgroundColor: Colors.white70,
           child: const Icon(Icons.add_comment),
         ),
@@ -57,13 +57,22 @@ class _HomeScreenState extends State<HomeScreen> {
               list =
                   data?.map((e) => ChatUser.fromJson(e.data())).toList() ?? [];
 
-              return ListView.builder(
-                  itemCount: list.length,
-                  physics: const BouncingScrollPhysics(),
-                  itemBuilder: (context, index) {
-                    return ChatUserCard(user: list[index]);
-                    //return Text('Name:${list[index]}');
-                  });
+              if (list.isNotEmpty) {
+                return ListView.builder(
+                    itemCount: list.length,
+                    physics: const BouncingScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      return ChatUserCard(user: list[index]);
+                      //return Text('Name:${list[index]}');
+                    });
+              } else {
+                return const Center(
+                  child: Text(
+                    "No Contacts",
+                    style: TextStyle(fontSize: 30, color: Colors.grey),
+                  ),
+                );
+              }
           }
         },
       ),
