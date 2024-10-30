@@ -1,8 +1,10 @@
+import 'dart:convert';
+
 import 'package:chatter/screens/auth/login_screen.dart';
 import 'package:chatter/widgets/chat_user_card.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
+import 'dart:developer' as developer;
 import '../api/apis.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -44,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (snapshot.hasData) {
             final data = snapshot.data?.docs;
             for (var i in data!) {
+              developer.log('Data: ${jsonEncode(i.data())}');
               list.add(i.data()['name']);
             }
           }
