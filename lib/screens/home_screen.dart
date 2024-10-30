@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:chatter/models/chat_user.dart';
 import 'package:chatter/screens/auth/login_screen.dart';
 import 'package:chatter/widgets/chat_user_card.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  List<ChatUser> list = [];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,20 +45,26 @@ class _HomeScreenState extends State<HomeScreen> {
       body: StreamBuilder(
         stream: APIs.firestore.collection('user').snapshots(),
         builder: (context, snapshot) {
-          final list = [];
-          if (snapshot.hasData) {
-            final data = snapshot.data?.docs;
-            for (var i in data!) {
-              developer.log('Data: ${jsonEncode(i.data())}');
-              list.add(i.data()['name']);
-            }
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+            case ConnectionState.none:
+              return const Center(child: CircularProgressIndicator());
+            // TODO: Handle this case.
+            case ConnectionState.active:
+            // TODO: Handle this case.
+            case ConnectionState.done:
+              final data = snapshot.data?.docs;
+              list =
+                  data?.map((e) => ChatUser.fromJson(e.data())).toList() ?? [];
+
+              return ListView.builder(
+                  itemCount: list.length,
+                  physics: const BouncingScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return ChatUserCard(user: list[index]);
+                    //return Text('Name:${list[index]}');
+                  });
           }
-          return ListView.builder(
-              itemCount: list.length,
-              physics: const BouncingScrollPhysics(),
-              itemBuilder: (context, index) {
-                return Text('Name:${list[index]}');
-              });
         },
       ),
     );
