@@ -1,9 +1,8 @@
 import 'package:chatter/models/chat_user.dart';
-import 'package:chatter/screens/auth/login_screen.dart';
 import 'package:chatter/screens/profile_screem.dart';
 import 'package:chatter/widgets/chat_user_card.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import '../api/apis.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,22 +13,56 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<ChatUser> list = [];
+  List<ChatUser> _list = [];
+  final List<ChatUser> _searchList = [];
+  bool _isSearching = false;
+  @override
+  void initState() {
+    super.initState();
+    APIs.getSelfInfo();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: const Icon(Icons.home),
-        title: const Text('Chatter'),
+        title: _isSearching
+            ? TextField(
+                decoration: const InputDecoration(
+                    border: InputBorder.none, hintText: 'Name or E-mail'),
+                autofocus: true,
+                style: const TextStyle(fontSize: 16),
+                onChanged: (val) {
+                  _searchList.clear();
+                  for (var i in _list) {
+                    if (i.name.toLowerCase().contains(val.toLowerCase()) ||
+                        i.email.toLowerCase().contains(val.toLowerCase())) {
+                      _searchList.add(i);
+                    }
+                    setState(() {
+                      _searchList;
+                    });
+                  }
+                },
+              )
+            : const Text('Chatter'),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
+          IconButton(
+              onPressed: () {
+                setState(() {
+                  _isSearching = !_isSearching;
+                  _searchList.clear();
+                });
+              },
+              icon: Icon(
+                  _isSearching ? CupertinoIcons.clear_thick : Icons.search)),
           IconButton(
               onPressed: () {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => ProfileScreen(user: list[0])));
+                        builder: (_) => ProfileScreen(user: APIs.me)));
               },
               icon: const Icon(Icons.more_vert)),
         ],
@@ -43,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       body: StreamBuilder(
-        stream: APIs.firestore.collection('user').snapshots(),
+        stream: APIs.getAllUsers(),
         builder: (context, snapshot) {
           switch (snapshot.connectionState) {
             case ConnectionState.waiting:
@@ -54,15 +87,17 @@ class _HomeScreenState extends State<HomeScreen> {
             // TODO: Handle this case.
             case ConnectionState.done:
               final data = snapshot.data?.docs;
-              list =
+              _list =
                   data?.map((e) => ChatUser.fromJson(e.data())).toList() ?? [];
 
-              if (list.isNotEmpty) {
+              if (_list.isNotEmpty) {
                 return ListView.builder(
-                    itemCount: list.length,
+                    itemCount: _isSearching ? _searchList.length : _list.length,
                     physics: const BouncingScrollPhysics(),
                     itemBuilder: (context, index) {
-                      return ChatUserCard(user: list[index]);
+                      return ChatUserCard(
+                          user:
+                              _isSearching ? _searchList[index] : _list[index]);
                       //return Text('Name:${list[index]}');
                     });
               } else {
