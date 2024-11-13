@@ -171,16 +171,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // Read the image as bytes
       final imageBytes = await _image!.readAsBytes();
+      final ext = _image!.path.split('.').last;
 
       final response = await APIs.supabase.storage
           .from('Images') // Your bucket name
-          .uploadBinary('uploads/$fileName.jpg', imageBytes);
+          .uploadBinary('uploads/$fileName.$ext', imageBytes);
 
       if (response.isNotEmpty) {
         Dialogs.showSnackbar(context, "Image Upload Successful");
         final imageUrl = APIs.supabase.storage
             .from('Images')
-            .getPublicUrl('uploads/$fileName.jpg');
+            .getPublicUrl('uploads/$fileName.$ext');
         APIs.me.image = imageUrl;
         APIs.updateImageInfo();
       } else {
@@ -219,8 +220,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           fixedSize: Size(mq.width * .3, mq.height * .15)),
                       onPressed: () async {
                         final ImagePicker picker = ImagePicker();
-                        final XFile? image =
-                            await picker.pickImage(source: ImageSource.gallery);
+                        final XFile? image = await picker.pickImage(
+                            source: ImageSource.gallery, imageQuality: 80);
                         if (image != null) {
                           setState(() {
                             _image = File(image.path);
@@ -238,10 +239,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           fixedSize: Size(mq.width * .3, mq.height * .15)),
                       onPressed: () async {
                         final ImagePicker picker = ImagePicker();
-                        final XFile? image =
-                            await picker.pickImage(source: ImageSource.camera);
+                        final XFile? image = await picker.pickImage(
+                            source: ImageSource.camera, imageQuality: 80);
                         if (image != null) {
-                          log('Image Path: ${image.path} -- mimeType: ${image.mimeType}');
                           setState(() {
                             _image = File(image.path);
                           });
