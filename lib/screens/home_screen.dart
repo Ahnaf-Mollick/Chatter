@@ -1,5 +1,5 @@
 import 'package:chatter/models/chat_user.dart';
-import 'package:chatter/screens/profile_screem.dart';
+import 'package:chatter/screens/profile_screen.dart';
 import 'package:chatter/widgets/chat_user_card.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

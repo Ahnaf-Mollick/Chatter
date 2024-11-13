@@ -1,6 +1,5 @@
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter/helper/dialogs.dart';
 import 'package:chatter/main.dart';
@@ -10,6 +9,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../api/apis.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -23,7 +23,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _image;
+  File? _image;
   List<ChatUser> list = [];
 
   @override
@@ -68,31 +68,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     Stack(
                       children: [
-                        _image != null
-                            ? ClipRRect(
-                                borderRadius:
-                                    BorderRadius.circular(mq.height * .1),
-                                child: Image.file(
-                                  File(_image!),
-                                  width: mq.height * .2,
-                                  height: mq.height * .2,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : ClipRRect(
-                                borderRadius:
-                                    BorderRadius.circular(mq.height * .1),
-                                child: CachedNetworkImage(
-                                  width: mq.height * .2,
-                                  height: mq.height * .2,
-                                  fit: BoxFit.fill,
-                                  imageUrl: widget.user.image,
-                                  errorWidget: (context, url, error) =>
-                                      const CircleAvatar(
-                                    child: Icon(CupertinoIcons.person),
-                                  ),
-                                ),
-                              ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(mq.height * .1),
+                          child: CachedNetworkImage(
+                            width: mq.height * .2,
+                            height: mq.height * .2,
+                            fit: BoxFit.fill,
+                            imageUrl: widget.user.image,
+                            errorWidget: (context, url, error) =>
+                                const CircleAvatar(
+                              child: Icon(CupertinoIcons.person),
+                            ),
+                          ),
+                        ),
                         Positioned(
                           bottom: 0,
                           right: 0,
@@ -176,6 +164,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> uploadImage() async {
+    try {
+      // Create a unique file name
+      final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+
+      // Read the image as bytes
+      final imageBytes = await _image!.readAsBytes();
+
+      final response = await APIs.supabase.storage
+          .from('Images') // Your bucket name
+          .uploadBinary('uploads/$fileName.jpg', imageBytes);
+
+      if (response.isNotEmpty) {
+        Dialogs.showSnackbar(context, "Image Upload Successful");
+        final imageUrl = APIs.supabase.storage
+            .from('Images')
+            .getPublicUrl('uploads/$fileName.jpg');
+        APIs.me.image = imageUrl;
+        APIs.updateImageInfo();
+      } else {
+        Dialogs.showSnackbar(context, "Unsuccessful");
+      }
+    } catch (e) {
+      Dialogs.showSnackbar(context, "Unexpected Error Occurred:${e}");
+    }
+  }
+
   void _showBottomSheet() {
     showModalBottomSheet(
         context: context,
@@ -207,11 +222,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         final XFile? image =
                             await picker.pickImage(source: ImageSource.gallery);
                         if (image != null) {
-                          log('Image Path: ${image.path} -- mimeType: ${image.mimeType}');
                           setState(() {
-                            _image = image.path;
+                            _image = File(image.path);
                           });
+                          uploadImage();
                           Navigator.pop(context);
+                          Dialogs.showSnackbar(context, 'Image Updated');
                         }
                       },
                       child: Image.asset('asset/images/add_image.png')),
@@ -227,9 +243,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         if (image != null) {
                           log('Image Path: ${image.path} -- mimeType: ${image.mimeType}');
                           setState(() {
-                            _image = image.path;
+                            _image = File(image.path);
                           });
+                          uploadImage();
                           Navigator.pop(context);
+                          Dialogs.showSnackbar(context, 'Image Updated');
                         }
                       },
                       child: Image.asset('asset/images/camera.png'))

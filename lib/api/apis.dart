@@ -1,11 +1,13 @@
 import 'package:chatter/models/chat_user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class APIs {
+  static SupabaseClient supabase = Supabase.instance.client;
   static FirebaseAuth auth = FirebaseAuth.instance;
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
-  static User get user => auth.currentUser!;
+  static get user => auth.currentUser!;
   static late ChatUser me;
   //for checking existed user
   static Future<void> getSelfInfo() async {
@@ -53,5 +55,12 @@ class APIs {
         .collection('user')
         .doc(user.uid)
         .update({'name': me.name, 'about': me.about});
+  }
+
+  static Future<void> updateImageInfo() async {
+    await firestore
+        .collection('user')
+        .doc(user.uid)
+        .update({'image': me.image});
   }
 }
