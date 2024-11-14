@@ -1,4 +1,5 @@
 import 'package:chatter/models/chat_user.dart';
+import 'package:chatter/models/message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -62,5 +63,30 @@ class APIs {
         .collection('user')
         .doc(user.uid)
         .update({'image': me.image});
+  }
+
+  static String getConversationID(String id) => user.uid.hashCode <= id.hashCode
+      ? '${user.uid}_$id'
+      : '${id}_${user.uid}';
+
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getAllMessages(
+      ChatUser user) {
+    return firestore
+        .collection('chats/${getConversationID(user.id)}/messages/')
+        .snapshots();
+  }
+
+  static Future<void> sendMessage(ChatUser ChatUser, String msg) async {
+    final time = DateTime.now().millisecondsSinceEpoch.toString();
+    final Message message = Message(
+        msg: msg,
+        toId: ChatUser.id,
+        read: '',
+        type: Type.text,
+        sent: time,
+        fromId: user.uid);
+    final ref = firestore
+        .collection('chats/${getConversationID(ChatUser.id)}/messages/');
+    await ref.doc().set(message.toJson());
   }
 }

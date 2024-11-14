@@ -31,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
   _handleloginbtn() {
     Dialogs.showProgressbar(context);
     _signInWithGoogle().then((user) async {
+      // ignore: use_build_context_synchronously
       Navigator.pop(context);
       if (user != null) {
         log('\nuser:${user.user}');
