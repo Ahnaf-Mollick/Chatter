@@ -30,74 +30,86 @@ class _ChatScreenState extends State<ChatScreen> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: SafeArea(
-        child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.white70,
-            automaticallyImplyLeading: false,
-            flexibleSpace: _appBar(),
-          ),
-          backgroundColor: const Color.fromARGB(255, 195, 229, 250),
-          body: Column(
-            children: [
-              Expanded(
-                child: StreamBuilder(
-                  stream: APIs.getAllMessages(widget.user),
-                  builder: (context, snapshot) {
-                    switch (snapshot.connectionState) {
-                      case ConnectionState.waiting:
-                      case ConnectionState.none:
-                        return const SizedBox();
-                      // TODO: Handle this case.
-                      case ConnectionState.active:
-                      // TODO: Handle this case.
-                      case ConnectionState.done:
-                        final data = snapshot.data?.docs;
-                        _list = data
-                                ?.map((e) => Message.fromJson(e.data()))
-                                .toList() ??
-                            [];
+        child: WillPopScope(
+          onWillPop: () {
+            if (_showEmoji) {
+              setState(() {
+                _showEmoji = !_showEmoji;
+              });
+              return Future.value(false);
+            } else {
+              return Future.value(true);
+            }
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.white70,
+              automaticallyImplyLeading: false,
+              flexibleSpace: _appBar(),
+            ),
+            backgroundColor: const Color.fromARGB(255, 195, 229, 250),
+            body: Column(
+              children: [
+                Expanded(
+                  child: StreamBuilder(
+                    stream: APIs.getAllMessages(widget.user),
+                    builder: (context, snapshot) {
+                      switch (snapshot.connectionState) {
+                        case ConnectionState.waiting:
+                        case ConnectionState.none:
+                          return const SizedBox();
+                        // TODO: Handle this case.
+                        case ConnectionState.active:
+                        // TODO: Handle this case.
+                        case ConnectionState.done:
+                          final data = snapshot.data?.docs;
+                          _list = data
+                                  ?.map((e) => Message.fromJson(e.data()))
+                                  .toList() ??
+                              [];
 
-                        if (_list.isNotEmpty) {
-                          return ListView.builder(
-                              itemCount: _list.length,
-                              reverse: true,
-                              physics: const BouncingScrollPhysics(),
-                              itemBuilder: (context, index) {
-                                return MessageCard(
-                                  message: _list[index],
-                                );
-                              });
-                        } else {
-                          return const Center(
-                            child: Text(
-                              "Say Hi!👋",
-                              style:
-                                  TextStyle(fontSize: 30, color: Colors.grey),
-                            ),
-                          );
-                        }
-                    }
-                  },
+                          if (_list.isNotEmpty) {
+                            return ListView.builder(
+                                itemCount: _list.length,
+                                reverse: true,
+                                physics: const BouncingScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  return MessageCard(
+                                    message: _list[index],
+                                  );
+                                });
+                          } else {
+                            return const Center(
+                              child: Text(
+                                "Say Hi!👋",
+                                style:
+                                    TextStyle(fontSize: 30, color: Colors.grey),
+                              ),
+                            );
+                          }
+                      }
+                    },
+                  ),
                 ),
-              ),
-              _chatInput(),
-              if (_showEmoji)
-                SizedBox(
-                  height: mq.height * 0.33,
-                  child: EmojiPicker(
-                    textEditingController: _textController,
-                    // pass here the same [TextEditingController] that is connected to your input field, usually a [TextFormField]
-                    config: Config(
-                      emojiViewConfig: EmojiViewConfig(
-                        backgroundColor:
-                            const Color.fromARGB(255, 195, 229, 250),
-                        columns: 7,
-                        emojiSizeMax: 28 * (Platform.isIOS ? 1.20 : 1.0),
+                _chatInput(),
+                if (_showEmoji)
+                  SizedBox(
+                    height: mq.height * 0.33,
+                    child: EmojiPicker(
+                      textEditingController: _textController,
+                      // pass here the same [TextEditingController] that is connected to your input field, usually a [TextFormField]
+                      config: Config(
+                        emojiViewConfig: EmojiViewConfig(
+                          backgroundColor:
+                              const Color.fromARGB(255, 195, 229, 250),
+                          columns: 7,
+                          emojiSizeMax: 28 * (Platform.isIOS ? 1.20 : 1.0),
+                        ),
                       ),
                     ),
-                  ),
-                )
-            ],
+                  )
+              ],
+            ),
           ),
         ),
       ),
@@ -162,6 +174,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   IconButton(
                       onPressed: () {
+                        FocusScope.of(context).unfocus();
                         setState(() {
                           _showEmoji = !_showEmoji;
                         });
