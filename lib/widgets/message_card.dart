@@ -1,11 +1,13 @@
+import 'dart:developer';
 import 'package:chatter/api/apis.dart';
+import 'package:chatter/helper/my_date_util.dart';
 import 'package:flutter/material.dart';
-
 import '../main.dart';
 import '../models/message.dart';
 
 class MessageCard extends StatefulWidget {
   final Message message;
+
   const MessageCard({super.key, required this.message});
 
   @override
@@ -21,6 +23,10 @@ class _MessageCardState extends State<MessageCard> {
   }
 
   Widget _blueMessage() {
+    if (widget.message.read.isEmpty) {
+      APIs.updateMessageReadStatus(widget.message);
+      log('Updated');
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -45,7 +51,8 @@ class _MessageCardState extends State<MessageCard> {
         Padding(
           padding: EdgeInsets.only(right: mq.width * .04),
           child: Text(
-            widget.message.sent,
+            MyDateUtil.getFormattedTime(
+                context: context, time: widget.message.sent),
             style: const TextStyle(fontSize: 13, color: Colors.black54),
           ),
         )
@@ -62,16 +69,18 @@ class _MessageCardState extends State<MessageCard> {
             SizedBox(
               width: mq.width * .02,
             ),
-            const Icon(
-              Icons.done_all_rounded,
-              color: Colors.green,
-              size: 20,
-            ),
+            if (widget.message.read.isNotEmpty)
+              const Icon(
+                Icons.done_all_rounded,
+                color: Colors.green,
+                size: 20,
+              ),
             SizedBox(
               width: mq.width * .01,
             ),
             Text(
-              '${widget.message.read}12:00AM',
+              MyDateUtil.getFormattedTime(
+                  context: context, time: widget.message.sent),
               style: const TextStyle(fontSize: 13, color: Colors.black54),
             ),
           ],
