@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter/main.dart';
 import 'package:chatter/models/chat_user.dart';
 import 'package:chatter/models/message.dart';
 import 'package:chatter/widgets/message_card.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +13,7 @@ import '../api/apis.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatUser user;
+
   const ChatScreen({super.key, required this.user});
 
   @override
@@ -19,60 +23,82 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   List<Message> _list = [];
   final _textController = TextEditingController();
+  bool _showEmoji = false;
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.white70,
-          automaticallyImplyLeading: false,
-          flexibleSpace: _appBar(),
-        ),
-        backgroundColor: Color.fromARGB(255, 195, 229, 250),
-        body: Column(
-          children: [
-            Expanded(
-              child: StreamBuilder(
-                stream: APIs.getAllMessages(widget.user),
-                builder: (context, snapshot) {
-                  switch (snapshot.connectionState) {
-                    case ConnectionState.waiting:
-                    case ConnectionState.none:
-                      return const SizedBox();
-                    // TODO: Handle this case.
-                    case ConnectionState.active:
-                    // TODO: Handle this case.
-                    case ConnectionState.done:
-                      final data = snapshot.data?.docs;
-                      _list = data
-                              ?.map((e) => Message.fromJson(e.data()))
-                              .toList() ??
-                          [];
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SafeArea(
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.white70,
+            automaticallyImplyLeading: false,
+            flexibleSpace: _appBar(),
+          ),
+          backgroundColor: const Color.fromARGB(255, 195, 229, 250),
+          body: Column(
+            children: [
+              Expanded(
+                child: StreamBuilder(
+                  stream: APIs.getAllMessages(widget.user),
+                  builder: (context, snapshot) {
+                    switch (snapshot.connectionState) {
+                      case ConnectionState.waiting:
+                      case ConnectionState.none:
+                        return const SizedBox();
+                      // TODO: Handle this case.
+                      case ConnectionState.active:
+                      // TODO: Handle this case.
+                      case ConnectionState.done:
+                        final data = snapshot.data?.docs;
+                        _list = data
+                                ?.map((e) => Message.fromJson(e.data()))
+                                .toList() ??
+                            [];
 
-                      if (_list.isNotEmpty) {
-                        return ListView.builder(
-                            itemCount: _list.length,
-                            reverse: true,
-                            physics: const BouncingScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              return MessageCard(
-                                message: _list[index],
-                              );
-                            });
-                      } else {
-                        return const Center(
-                          child: Text(
-                            "Say Hi!👋",
-                            style: TextStyle(fontSize: 30, color: Colors.grey),
-                          ),
-                        );
-                      }
-                  }
-                },
+                        if (_list.isNotEmpty) {
+                          return ListView.builder(
+                              itemCount: _list.length,
+                              reverse: true,
+                              physics: const BouncingScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                return MessageCard(
+                                  message: _list[index],
+                                );
+                              });
+                        } else {
+                          return const Center(
+                            child: Text(
+                              "Say Hi!👋",
+                              style:
+                                  TextStyle(fontSize: 30, color: Colors.grey),
+                            ),
+                          );
+                        }
+                    }
+                  },
+                ),
               ),
-            ),
-            _chatInput()
-          ],
+              _chatInput(),
+              if (_showEmoji)
+                SizedBox(
+                  height: mq.height * 0.33,
+                  child: EmojiPicker(
+                    textEditingController: _textController,
+                    // pass here the same [TextEditingController] that is connected to your input field, usually a [TextFormField]
+                    config: Config(
+                      emojiViewConfig: EmojiViewConfig(
+                        backgroundColor:
+                            const Color.fromARGB(255, 195, 229, 250),
+                        columns: 7,
+                        emojiSizeMax: 28 * (Platform.isIOS ? 1.20 : 1.0),
+                      ),
+                    ),
+                  ),
+                )
+            ],
+          ),
         ),
       ),
     );
@@ -94,6 +120,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: CachedNetworkImage(
               width: mq.height * .05,
               height: mq.height * .05,
+              fit: BoxFit.cover,
               imageUrl: widget.user.image,
               errorWidget: (context, url, error) => const CircleAvatar(
                 child: Icon(CupertinoIcons.person),
@@ -134,7 +161,11 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Row(
                 children: [
                   IconButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        setState(() {
+                          _showEmoji = !_showEmoji;
+                        });
+                      },
                       icon: const Icon(
                         Icons.emoji_emotions,
                         color: Colors.lightBlueAccent,
@@ -145,6 +176,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     keyboardType: TextInputType.multiline,
                     controller: _textController,
                     maxLines: null,
+                    onTap: () {
+                      setState(() {
+                        if (_showEmoji) _showEmoji = !_showEmoji;
+                      });
+                    },
                     decoration: const InputDecoration(
                         hintText: 'Type Something....',
                         hintStyle: TextStyle(

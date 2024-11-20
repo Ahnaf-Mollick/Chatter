@@ -27,7 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus,
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
           appBar: AppBar(
             title: const Text('User Profile'),
@@ -71,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           child: CachedNetworkImage(
                             width: mq.height * .2,
                             height: mq.height * .2,
-                            fit: BoxFit.fill,
+                            fit: BoxFit.cover,
                             imageUrl: widget.user.image,
                             errorWidget: (context, url, error) =>
                                 const CircleAvatar(

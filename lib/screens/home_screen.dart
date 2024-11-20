@@ -17,6 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<ChatUser> _searchList = [];
   bool _isSearching = false;
   final bool search = true;
+
   @override
   void initState() {
     super.initState();
@@ -26,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus,
+      onTap: () => FocusScope.of(context).unfocus(),
       child: WillPopScope(
         onWillPop: () {
           if (_isSearching) {

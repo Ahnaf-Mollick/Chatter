@@ -6,7 +6,6 @@ import 'package:chatter/models/chat_user.dart';
 import 'package:chatter/models/message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
 import '../screens/chat_screen.dart';
 
 class ChatUserCard extends StatefulWidget {
@@ -53,6 +52,7 @@ class _ChatUserCardState extends State<ChatUserCard> {
                   child: CachedNetworkImage(
                     width: mq.height * .055,
                     height: mq.height * .055,
+                    fit: BoxFit.cover,
                     imageUrl: widget.user.image,
                     errorWidget: (context, url, error) => const CircleAvatar(
                       child: Icon(CupertinoIcons.person),
@@ -67,7 +67,7 @@ class _ChatUserCardState extends State<ChatUserCard> {
                 trailing: _message == null
                     ? null
                     : _message!.read.isEmpty &&
-                            _message!.fromId == APIs.user.uid
+                            _message!.fromId != APIs.user.uid
                         ? Container(
                             width: 15,
                             height: 15,
