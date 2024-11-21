@@ -79,17 +79,17 @@ class APIs {
         .snapshots();
   }
 
-  static Future<void> sendMessage(ChatUser ChatUser, String msg) async {
+  static Future<void> sendMessage(ChatUser chatUser, String msg) async {
     final time = DateTime.now().millisecondsSinceEpoch.toString();
     final Message message = Message(
         msg: msg,
-        toId: ChatUser.id,
+        toId: chatUser.id,
         read: '',
         type: Type.text,
         sent: time,
         fromId: user.uid);
     final ref = firestore
-        .collection('chats/${getConversationID(ChatUser.id)}/messages/');
+        .collection('chats/${getConversationID(chatUser.id)}/messages/');
     await ref.doc(time).set(message.toJson());
   }
 
