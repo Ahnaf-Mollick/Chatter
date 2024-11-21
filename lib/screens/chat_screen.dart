@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter/main.dart';
 import 'package:chatter/models/chat_user.dart';
@@ -8,7 +7,6 @@ import 'package:chatter/widgets/message_card.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../api/apis.dart';
 
 class ChatScreen extends StatefulWidget {

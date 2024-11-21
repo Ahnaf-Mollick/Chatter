@@ -186,7 +186,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Dialogs.showSnackbar(context, "Unsuccessful");
       }
     } catch (e) {
-      Dialogs.showSnackbar(context, "Unexpected Error Occurred:${e}");
+      Dialogs.showSnackbar(context, "Unexpected Error Occurred:$e");
     }
   }
 
