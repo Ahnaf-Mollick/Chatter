@@ -1,8 +1,13 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:chatter/models/chat_user.dart';
 import 'package:chatter/models/message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../helper/dialogs.dart';
 
 class APIs {
   static SupabaseClient supabase = Supabase.instance.client;
@@ -79,18 +84,38 @@ class APIs {
         .snapshots();
   }
 
-  static Future<void> sendMessage(ChatUser chatUser, String msg) async {
+  static Future<void> sendMessage(
+      ChatUser chatUser, String msg, Type type) async {
     final time = DateTime.now().millisecondsSinceEpoch.toString();
     final Message message = Message(
         msg: msg,
         toId: chatUser.id,
         read: '',
-        type: Type.text,
+        type: type,
         sent: time,
         fromId: user.uid);
     final ref = firestore
         .collection('chats/${getConversationID(chatUser.id)}/messages/');
     await ref.doc(time).set(message.toJson());
+  }
+
+  static Future<void> sendChatImage(ChatUser chatUser, File file) async {
+    // Create a unique file name
+    final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+
+    // Read the image as bytes
+    final imageBytes = await file.readAsBytes();
+    final ext = file.path.split('.').last;
+
+    final response = await APIs.supabase.storage.from('Images').uploadBinary(
+        'messages/${getConversationID(chatUser.id)}/$fileName.$ext',
+        imageBytes);
+
+    if (response.isNotEmpty) {
+      final imageUrl = supabase.storage.from('Images').getPublicUrl(
+          'messages/${getConversationID(chatUser.id)}/$fileName.$ext');
+      sendMessage(chatUser, imageUrl, Type.image);
+    }
   }
 
   static Future<void> updateMessageReadStatus(Message message) async {
