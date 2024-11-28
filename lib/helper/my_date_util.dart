@@ -8,7 +8,9 @@ class MyDateUtil {
   }
 
   static String getLastMessageTime(
-      {required BuildContext context, required String time}) {
+      {required BuildContext context,
+      required String time,
+      bool showYear = false}) {
     final DateTime sent = DateTime.fromMillisecondsSinceEpoch(int.parse(time));
     final DateTime now = DateTime.now();
     if (now.day == sent.day &&
@@ -16,7 +18,30 @@ class MyDateUtil {
         now.year == sent.year) {
       return TimeOfDay.fromDateTime(sent).format(context);
     }
-    return '${sent.day} ${_getMonth(sent)}';
+    return showYear
+        ? '${sent.day} ${_getMonth(sent)} ${sent.year}'
+        : '${sent.day} ${_getMonth(sent)}';
+  }
+
+  static String getLastActiveTime(
+      {required BuildContext context, required String lastActive}) {
+    final int i = int.tryParse(lastActive) ?? -1;
+
+    if (i == -1) return 'Last Active not Available';
+
+    DateTime time = DateTime.fromMillisecondsSinceEpoch(i);
+    DateTime now = DateTime.now();
+    String formatterTime = TimeOfDay.fromDateTime(time).format(context);
+    if (now.day == time.day &&
+        now.month == time.month &&
+        now.year == time.year) {
+      return 'Last seen today at $formatterTime';
+    }
+    if ((now.difference(time).inHours / 24).round() == 1) {
+      return 'Last seen yesterday at $formatterTime';
+    }
+    String month = _getMonth(time);
+    return 'Last seen on ${time.day} $month at $formatterTime';
   }
 
   static String _getMonth(DateTime date) {

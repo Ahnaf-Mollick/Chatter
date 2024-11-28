@@ -58,6 +58,21 @@ class APIs {
         .snapshots();
   }
 
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getUserInfo(
+      ChatUser chatUser) {
+    return firestore
+        .collection('user')
+        .where('id', isEqualTo: chatUser.id)
+        .snapshots();
+  }
+
+  static Future<void> updateActiveStatus(bool isOnline) async {
+    firestore.collection('user').doc(user.uid).update({
+      'is_online': isOnline,
+      'last_active': DateTime.now().millisecondsSinceEpoch.toString()
+    });
+  }
+
   static Future<void> updateUserInfo() async {
     await firestore
         .collection('user')
