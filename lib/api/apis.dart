@@ -7,8 +7,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../helper/dialogs.dart';
-
 class APIs {
   static SupabaseClient supabase = Supabase.instance.client;
   static FirebaseAuth auth = FirebaseAuth.instance;
@@ -147,5 +145,37 @@ class APIs {
         .orderBy('sent', descending: true)
         .limit(1)
         .snapshots();
+  }
+
+  static Future<void> deleteMessage(Message message) async {
+    await firestore
+        .collection('chats/${getConversationID(message.toId)}/messages/')
+        .doc(message.sent)
+        .delete();
+
+    if (message.type == Type.image) {
+      // Parse the URL
+      try {
+        final uri = Uri.parse(message.msg);
+        final pathSegments = uri.pathSegments;
+
+        // Locate the bucket and file path
+        final bucketIndex = pathSegments.indexOf('public') + 1;
+        final bucketName =
+            pathSegments[bucketIndex]; // Bucket name (e.g., "Images")
+        final filePath =
+            pathSegments.sublist(bucketIndex + 1).join('/'); // File path
+        await supabase.storage.from(bucketName).remove([filePath]);
+      } catch (e) {
+        print(e);
+      }
+    }
+  }
+
+  static Future<void> updateMessage(Message message, String updatedMsg) async {
+    await firestore
+        .collection('chats/${getConversationID(message.toId)}/messages/')
+        .doc(message.sent)
+        .update({'msg': updatedMsg});
   }
 }

@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../api/apis.dart';
-import '../helper/dialogs.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatUser user;

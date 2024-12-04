@@ -3,8 +3,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatter/api/apis.dart';
 import 'package:chatter/helper/my_date_util.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:saver_gallery/saver_gallery.dart';
+import '../helper/dialogs.dart';
 import '../main.dart';
 import '../models/message.dart';
+import 'package:http/http.dart' as http;
 
 class MessageCard extends StatefulWidget {
   final Message message;
@@ -168,7 +173,16 @@ class _MessageCardState extends State<MessageCard> {
                         size: 26,
                       ),
                       name: 'Copy Text',
-                      onTap: () {})
+                      onTap: () async {
+                        await Clipboard.setData(
+                                ClipboardData(text: widget.message.msg))
+                            .then((value) {
+                          //for hiding bottom sheet
+                          Navigator.pop(context);
+
+                          Dialogs.showSnackbar(context, 'Text Copied!');
+                        });
+                      })
                   : _OptionItem(
                       icon: const Icon(
                         Icons.download,
@@ -176,7 +190,41 @@ class _MessageCardState extends State<MessageCard> {
                         size: 26,
                       ),
                       name: 'Save Image',
-                      onTap: () {}),
+                      onTap: () async {
+                        try {
+                          // Step 2: Download the Image
+                          final response =
+                              await http.get(Uri.parse(widget.message.msg));
+                          if (response.statusCode == 200) {
+                            final imageBytes = response.bodyBytes;
+                            String imageName = DateTime.now().toString();
+
+                            // Step 3: Save Image to Gallery
+                            final result = await SaverGallery.saveImage(
+                                imageBytes,
+                                quality: 100,
+                                name: imageName,
+                                androidExistNotSave: false);
+                            if (result.isSuccess) {
+                              Dialogs.showSnackbar(
+                                  context, 'Image Saved Successfully');
+                              Navigator.pop(context);
+                            } else {
+                              Dialogs.showSnackbar(context,
+                                  'Failed to save image: ${result.errorMessage}');
+                              Navigator.pop(context);
+                            }
+                          } else {
+                            Dialogs.showSnackbar(context,
+                                'Failed to download image. Status code: ${response.statusCode}');
+                            Navigator.pop(context);
+                          }
+                        } catch (e) {
+                          Dialogs.showSnackbar(
+                              context, 'Error occurred while saving image: $e');
+                          Navigator.pop(context);
+                        }
+                      }),
               Divider(
                 color: Colors.grey,
                 endIndent: mq.width * .03,
@@ -190,7 +238,10 @@ class _MessageCardState extends State<MessageCard> {
                       size: 26,
                     ),
                     name: 'Edit Message',
-                    onTap: () {}),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showMessageUpdateDialog();
+                    }),
               if (isMe)
                 _OptionItem(
                     icon: const Icon(
@@ -199,7 +250,9 @@ class _MessageCardState extends State<MessageCard> {
                       size: 26,
                     ),
                     name: 'Delete Message',
-                    onTap: () {}),
+                    onTap: () async {
+                      await APIs.deleteMessage(widget.message);
+                    }),
               if (isMe)
                 Divider(
                   color: Colors.grey,
@@ -211,7 +264,8 @@ class _MessageCardState extends State<MessageCard> {
                     Icons.remove_red_eye,
                     color: Colors.blue,
                   ),
-                  name: 'Sent At',
+                  name:
+                      'Sent At: ${MyDateUtil.getMessageTime(context: context, time: widget.message.sent)}',
                   onTap: () {}),
               _OptionItem(
                   icon: const Icon(
@@ -219,11 +273,78 @@ class _MessageCardState extends State<MessageCard> {
                     color: Colors.green,
                     size: 26,
                   ),
-                  name: 'Read At',
+                  name: widget.message.read.isEmpty
+                      ? 'Read At: Not seen yet'
+                      : 'Read At: ${MyDateUtil.getMessageTime(context: context, time: widget.message.read)}',
                   onTap: () {}),
             ],
           );
         });
+  }
+
+  void _showMessageUpdateDialog() {
+    String updatedMsg = widget.message.msg;
+
+    showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+              contentPadding: const EdgeInsets.only(
+                  left: 24, right: 24, top: 30, bottom: 10),
+
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(20))),
+
+              //title
+              title: const Row(
+                children: [
+                  Icon(
+                    Icons.message,
+                    color: Colors.blue,
+                    size: 25,
+                  ),
+                  Text(
+                    ' Update Message',
+                    style: TextStyle(fontSize: 20),
+                  )
+                ],
+              ),
+
+              //content
+              content: TextFormField(
+                initialValue: updatedMsg,
+                maxLines: null,
+                onChanged: (value) => updatedMsg = value,
+                decoration: const InputDecoration(
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(15)))),
+              ),
+
+              //actions
+              actions: [
+                //cancel button
+                MaterialButton(
+                    onPressed: () {
+                      //hide alert dialog
+                      Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(color: Colors.blue, fontSize: 16),
+                    )),
+
+                //update button
+                MaterialButton(
+                    onPressed: () {
+                      //hide alert dialog
+                      Navigator.pop(context);
+                      APIs.updateMessage(widget.message, updatedMsg);
+                    },
+                    child: const Text(
+                      'Update',
+                      style: TextStyle(color: Colors.blue, fontSize: 16),
+                    ))
+              ],
+            ));
   }
 }
 
@@ -250,7 +371,7 @@ class _OptionItem extends StatelessWidget {
             Flexible(
                 child: Text(
               '     $name',
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 15, color: Colors.black54, letterSpacing: 0.5),
             ))
           ],
