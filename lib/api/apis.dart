@@ -49,10 +49,33 @@ class APIs {
         .set(chatUser.toJson()));
   }
 
-  static Stream<QuerySnapshot<Map<String, dynamic>>> getAllUsers() {
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getAllUsers(
+      List<String> userIds) {
     return firestore
         .collection('user')
-        .where('id', isNotEqualTo: user.uid)
+        .where('id',
+            whereIn: userIds.isEmpty
+                ? ['']
+                : userIds) //because empty list throws an error
+        // .where('id', isNotEqualTo: user.uid)
+        .snapshots();
+  }
+
+  static Future<void> sendFirstMessage(
+      ChatUser chatUser, String msg, Type type) async {
+    await firestore
+        .collection('user')
+        .doc(chatUser.id)
+        .collection('my_users')
+        .doc(user.uid)
+        .set({}).then((value) => sendMessage(chatUser, msg, type));
+  }
+
+  static Stream<QuerySnapshot<Map<String, dynamic>>> getMyUsersId() {
+    return firestore
+        .collection('user')
+        .doc(user.uid)
+        .collection('my_users')
         .snapshots();
   }
 
@@ -69,6 +92,34 @@ class APIs {
       'is_online': isOnline,
       'last_active': DateTime.now().millisecondsSinceEpoch.toString()
     });
+  }
+
+  static Future<bool> addChatUser(String email) async {
+    final data = await firestore
+        .collection('user')
+        .where('email', isEqualTo: email)
+        .get();
+
+    print('data: ${data.docs}');
+
+    if (data.docs.isNotEmpty && data.docs.first.id != user.uid) {
+      //user exists
+
+      print('user exists: ${data.docs.first.data()}');
+
+      firestore
+          .collection('user')
+          .doc(user.uid)
+          .collection('my_users')
+          .doc(data.docs.first.id)
+          .set({});
+
+      return true;
+    } else {
+      //user doesn't exists
+
+      return false;
+    }
   }
 
   static Future<void> updateUserInfo() async {

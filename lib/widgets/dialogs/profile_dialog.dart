@@ -24,7 +24,7 @@ class ProfileDialog extends StatelessWidget {
           children: [
             Positioned(
               top: mq.height * .055,
-              left: mq.width * .04,
+              left: mq.width * .1,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(mq.height * .25),
                 child: CachedNetworkImage(
